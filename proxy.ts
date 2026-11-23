@@ -2,6 +2,7 @@ import createIntlMiddleware from 'next-intl/middleware';
 import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from '@/i18n/routing';
 import { updateSession } from '@/lib/supabase/proxy';
+import { appEnv } from '@/lib/app-env';
 
 const handleI18nRouting = createIntlMiddleware(routing);
 
@@ -28,12 +29,19 @@ export async function proxy(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = '/es/login';
       url.searchParams.set('next', pathname);
-      return carrySupabase(supabaseResponse, NextResponse.redirect(url));
+      return noindex(carrySupabase(supabaseResponse, NextResponse.redirect(url)));
     }
-    return supabaseResponse;
+    return noindex(supabaseResponse);
   }
 
-  return carrySupabase(supabaseResponse, handleI18nRouting(request));
+  return noindex(carrySupabase(supabaseResponse, handleI18nRouting(request)));
+}
+
+function noindex(response: NextResponse): NextResponse {
+  if (appEnv !== 'production') {
+    response.headers.set('X-Robots-Tag', 'noindex');
+  }
+  return response;
 }
 
 export const config = {

@@ -3,14 +3,14 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { attachDatabasePool } from '@vercel/functions';
 import * as schema from './generated/schema';
+import { serverEnv } from '@/lib/env';
 
 const globalForDb = globalThis as unknown as { pgPool?: Pool };
 
 const pool =
   globalForDb.pgPool ??
   new Pool({
-    // Replaced with serverEnv.DATABASE_URL in Paso 3 when lib/env.ts is created.
-    connectionString: process.env['DATABASE_URL']!,
+    connectionString: serverEnv.DATABASE_URL,
     max: 5,
     idleTimeoutMillis: 5_000,
   });
