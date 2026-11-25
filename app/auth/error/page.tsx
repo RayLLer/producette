@@ -1,50 +1,34 @@
+import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Suspense } from "react";
+import { ResendConfirmation } from "@/components/resend-confirmation";
+import { parseAuthErrorReason } from "@/lib/domain/auth-errors";
+import { AUTH_LOCALE, getResendLabels } from "@/lib/auth-labels";
 
-async function ErrorContent({
+export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ error: string }>;
+  searchParams: Promise<{ reason?: string }>;
 }) {
-  const params = await searchParams;
+  const reason = parseAuthErrorReason((await searchParams).reason);
+  const t = await getTranslations({ locale: AUTH_LOCALE, namespace: "Auth" });
+  const labels = await getResendLabels();
 
-  return (
-    <>
-      {params?.error ? (
-        <p className="text-sm text-muted-foreground">
-          Code error: {params.error}
-        </p>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          An unspecified error occurred.
-        </p>
-      )}
-    </>
-  );
-}
-
-export default function Page({
-  searchParams,
-}: {
-  searchParams: Promise<{ error: string }>;
-}) {
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <div className="flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                Sorry, something went wrong.
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Suspense>
-                <ErrorContent searchParams={searchParams} />
-              </Suspense>
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">{t("errorTitle")}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">{t(`errors.${reason}`)}</p>
+            <Link href="/auth/login" className="text-sm underline underline-offset-4">
+              {t("goToLogin")}
+            </Link>
+            <ResendConfirmation labels={labels} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

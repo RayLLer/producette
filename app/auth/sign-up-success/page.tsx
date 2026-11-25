@@ -5,8 +5,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ResendConfirmation } from "@/components/resend-confirmation";
+import { getResendLabels } from "@/lib/auth-labels";
 
-export default function Page() {
+export default async function Page() {
+  const labels = await getResendLabels();
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
@@ -18,11 +21,12 @@ export default function Page() {
               </CardTitle>
               <CardDescription>Check your email to confirm</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col gap-4">
               <p className="text-sm text-muted-foreground">
                 You&apos;ve successfully signed up. Please check your email to
                 confirm your account before signing in.
               </p>
+              <ResendConfirmation labels={labels} />
             </CardContent>
           </Card>
         </div>

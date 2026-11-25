@@ -10,5 +10,25 @@
     "title": "Página no encontrada",
     "description": "La página que buscas no existe o cambió de dirección.",
     "back": "Volver al inicio"
+  },
+  "Auth": {
+    "confirmedNotice": "Tu correo está confirmado. Inicia sesión para continuar.",
+    "errorTitle": "No pudimos confirmar tu correo",
+    "errors": {
+      "link_expired": "El enlace venció o ya se usó. Si ya lo abriste antes, tu correo puede estar confirmado: intenta iniciar sesión. Si no, pide un correo nuevo.",
+      "rate_limited": "Se enviaron demasiados correos en poco tiempo. Espera unos minutos y vuelve a intentarlo.",
+      "missing_token": "El enlace está incompleto. Ábrelo desde el correo o pide uno nuevo.",
+      "unknown": "Algo salió mal. Intenta iniciar sesión o pide un correo nuevo."
+    },
+    "goToLogin": "Ir a iniciar sesión",
+    "resend": {
+      "title": "¿No te llegó el correo?",
+      "description": "Revisa la carpeta de spam. Si no está, te enviamos otro enlace.",
+      "email": "Correo",
+      "button": "Reenviar correo de confirmación",
+      "sending": "Enviando…",
+      "sent": "Si la cuenta necesita confirmación, te enviamos un correo nuevo. Ábrelo en este mismo navegador.",
+      "wait": "Puedes pedir otro en {seconds} s"
+    }
   }
 }
