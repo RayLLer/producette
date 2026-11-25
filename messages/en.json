@@ -10,5 +10,25 @@
     "title": "Page not found",
     "description": "The page you are looking for does not exist or has moved.",
     "back": "Back to home"
+  },
+  "Auth": {
+    "confirmedNotice": "Your email is confirmed. Log in to continue.",
+    "errorTitle": "We could not confirm your email",
+    "errors": {
+      "link_expired": "The link expired or was already used. If you opened it before, your email may already be confirmed: try logging in. Otherwise, request a new email.",
+      "rate_limited": "Too many emails were sent in a short time. Wait a few minutes and try again.",
+      "missing_token": "The link is incomplete. Open it from the email or request a new one.",
+      "unknown": "Something went wrong. Try logging in or request a new email."
+    },
+    "goToLogin": "Go to login",
+    "resend": {
+      "title": "Didn’t get the email?",
+      "description": "Check your spam folder. If it is not there, we will send you another link.",
+      "email": "Email",
+      "button": "Resend confirmation email",
+      "sending": "Sending…",
+      "sent": "If the account needs confirmation, we sent you a new email. Open it in this same browser.",
+      "wait": "You can request another in {seconds} s"
+    }
   }
 }

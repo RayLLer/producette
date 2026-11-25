@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { SIGNUP_EMAIL_KEY } from "@/components/resend-confirmation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -49,6 +50,11 @@ export function SignUpForm({
         },
       });
       if (error) throw error;
+      try {
+        sessionStorage.setItem(SIGNUP_EMAIL_KEY, email);
+      } catch {
+        // storage unavailable: the resend form asks for the email
+      }
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
