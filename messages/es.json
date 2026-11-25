@@ -5,5 +5,10 @@
       "description": "Encuentra y reserva locaciones únicas y servicios audiovisuales en Miami. Pago Protegido."
     },
     "title": "Próximamente"
+  },
+  "NotFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscas no existe o cambió de dirección.",
+    "back": "Volver al inicio"
   }
 }

@@ -31,7 +31,11 @@ export const DEFAULT_FEE_SETTINGS: FeeSettings = {
  * - Platform takes providerBps% from price as commission (10%).
  * - Founders pay founderBps% (8%) instead of providerBps.
  * - If client registered via this host's referral link, platform takes referralBps% (3%).
- * - If host is both founder and referrer, the lower rate applies (3%).
+ * - hostFeeBps (profiles.host_fee_bps) is the Host's own rate: when set it replaces
+ *   providerBps/founderBps; null means "use fee_settings". It never decides the referral
+ *   rate, which depends on the Client–Host pair (accounts.referred_by_host_id).
+ * - Whenever the referral rate also applies, the lowest rate wins (e.g. founder 8% → 3%).
+ * - Each quote stores the rates applied at creation; later changes never touch it.
  * - All amounts in integer cents. Rounding: half-up (Math.round).
  */
 export function calculateFees(params: {
@@ -39,8 +43,9 @@ export function calculateFees(params: {
   settings: FeeSettings;
   hostIsFounder: boolean;
   clientReferredByThisHost: boolean;
+  hostFeeBps?: number | null;
 }): FeeResult {
-  const { priceInCents, settings, hostIsFounder, clientReferredByThisHost } =
+  const { priceInCents, settings, hostIsFounder, clientReferredByThisHost, hostFeeBps } =
     params;
 
   if (!Number.isInteger(priceInCents) || priceInCents < 0) {
@@ -49,14 +54,11 @@ export function calculateFees(params: {
 
   const appliedClientBps = settings.clientBps;
 
-  let appliedPlatformBps: number;
-  if (clientReferredByThisHost) {
-    appliedPlatformBps = settings.referralBps;
-  } else if (hostIsFounder) {
-    appliedPlatformBps = settings.founderBps;
-  } else {
-    appliedPlatformBps = settings.providerBps;
-  }
+  const hostBps =
+    hostFeeBps ?? (hostIsFounder ? settings.founderBps : settings.providerBps);
+  const appliedPlatformBps = clientReferredByThisHost
+    ? Math.min(hostBps, settings.referralBps)
+    : hostBps;
 
   const clientFeeInCents = Math.round(
     (priceInCents * appliedClientBps) / 10000,

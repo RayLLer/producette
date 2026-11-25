@@ -20,7 +20,8 @@
     "stripe:listen:v2": "stripe listen --forward-to localhost:3000/api/webhooks/stripe-v2",
     "sweep": "curl -s -X POST http://localhost:3000/api/internal/sweep -H \"Authorization: Bearer $CRON_SECRET\"",
     "sweep:watch": "node --eval \"const{execSync}=require('child_process'); setInterval(()=>{ try{execSync('npm run sweep',{stdio:'inherit'})}catch(e){} },60000); execSync('npm run sweep',{stdio:'inherit'})\"",
-    "prepare": "npx simple-git-hooks"
+    "prepare": "npx simple-git-hooks",
+    "db:pull": "node scripts/drizzle-pull.mjs"
   },
   "simple-git-hooks": {
     "pre-push": "while read l s r v; do case \"$r\" in refs/heads/main) echo 'Push to main blocked — use a feat/* branch and PR.' >&2; exit 1;; esac; done"

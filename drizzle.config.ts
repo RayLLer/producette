@@ -18,6 +18,14 @@ try {
 export default defineConfig({
   dialect: 'postgresql',
   out: './lib/server/db/generated',
-  schemaFilter: ['public'],
+  // auth.users is pulled only so FKs to it resolve; every other auth table is excluded by name
+  // (pulling them generates invalid TS). If Supabase adds one and typecheck breaks, add it here.
+  schemaFilter: ['public', 'auth'],
+  tablesFilter: [
+    '*',
+    '!audit_log_entries', '!custom_oauth_providers', '!flow_state', '!identities', '!instances',
+    '!mfa_*', '!oauth_*', '!one_time_tokens', '!refresh_tokens', '!saml_*', '!schema_migrations',
+    '!scim_*', '!sessions', '!sso_*', '!webauthn_*',
+  ],
   dbCredentials: { url: process.env['DATABASE_URL']! },
 });
