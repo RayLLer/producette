@@ -57,7 +57,7 @@ describe('profiles', () => {
 });
 
 describe('tablas internas sin permisos para el navegador', () => {
-  for (const table of ['panel_users', 'audit_log', 'fee_settings', 'stripe_events'] as const) {
+  for (const table of ['panel_users', 'audit_log', 'fee_settings', 'stripe_events', 'job_runs'] as const) {
     it(`authenticated recibe permission denied en ${table}`, async () => {
       const { error } = await c1.from(table).select('*').limit(1);
       expect(error?.code).toBe(PERMISSION_DENIED);

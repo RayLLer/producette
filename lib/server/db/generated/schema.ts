@@ -221,3 +221,18 @@ export const hostStripeAccounts = pgTable("host_stripe_accounts", {
 	check("host_stripe_accounts_requirements_status_check", sql`requirements_status = ANY (ARRAY['currently_due'::text, 'eventually_due'::text, 'past_due'::text])`),
 	check("host_stripe_accounts_transfers_status_check", sql`transfers_status = ANY (ARRAY['active'::text, 'pending'::text, 'rejected'::text, 'restricted'::text, 'unsupported'::text])`),
 ]);
+
+export const jobRuns = pgTable("job_runs", {
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	id: bigint({ mode: "number" }).primaryKey().generatedAlwaysAsIdentity({ name: "job_runs_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 9223372036854775807, cache: 1 }),
+	job: text().notNull(),
+	startedAt: timestamp("started_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	finishedAt: timestamp("finished_at", { withTimezone: true, mode: 'string' }),
+	processed: integer(),
+	error: text(),
+}, (table) => [
+	index("job_runs_job_started_at_idx").using("btree", table.job.asc().nullsLast().op("text_ops"), table.startedAt.desc().nullsFirst().op("text_ops")),
+	index("job_runs_running_idx").using("btree", table.startedAt.asc().nullsLast().op("timestamptz_ops")).where(sql`(finished_at IS NULL)`),
+	check("job_runs_check", sql`(finished_at IS NOT NULL) OR ((processed IS NULL) AND (error IS NULL))`),
+	check("job_runs_processed_check", sql`processed >= 0`),
+]);
