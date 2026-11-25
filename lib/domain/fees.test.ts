@@ -99,6 +99,49 @@ describe('calculateFees', () => {
     expect(result.hostNetInCents).toBe(0);
   });
 
+  it('hostFeeBps del perfil reemplaza la tasa general y la de fundador', () => {
+    const result = calculateFees({
+      priceInCents: 340_000,
+      settings,
+      hostIsFounder: true,
+      clientReferredByThisHost: false,
+      hostFeeBps: 700,
+    });
+    expect(result.appliedPlatformBps).toBe(700);
+    expect(result.platformFeeInCents).toBe(23_800);
+  });
+
+  it('hostFeeBps nulo usa fee_settings', () => {
+    const result = calculateFees({
+      priceInCents: 340_000,
+      settings,
+      hostIsFounder: false,
+      clientReferredByThisHost: false,
+      hostFeeBps: null,
+    });
+    expect(result.appliedPlatformBps).toBe(1000);
+  });
+
+  it('cliente referido con hostFeeBps: gana la tasa más baja', () => {
+    const higher = calculateFees({
+      priceInCents: 340_000,
+      settings,
+      hostIsFounder: false,
+      clientReferredByThisHost: true,
+      hostFeeBps: 700,
+    });
+    expect(higher.appliedPlatformBps).toBe(300);
+
+    const lower = calculateFees({
+      priceInCents: 340_000,
+      settings,
+      hostIsFounder: false,
+      clientReferredByThisHost: true,
+      hostFeeBps: 200,
+    });
+    expect(lower.appliedPlatformBps).toBe(200);
+  });
+
   it('tasas personalizadas (posible cambio futuro en fee_settings)', () => {
     const customSettings: FeeSettings = {
       providerBps: 1200,
