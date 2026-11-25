@@ -181,3 +181,43 @@ export const auditLog = pgTable("audit_log", {
 	check("audit_log_actor_role_check", sql`actor_role = ANY (ARRAY['admin'::text, 'soporte'::text, 'finanzas'::text, 'system'::text])`),
 	check("audit_log_reason_check", sql`length(TRIM(BOTH FROM reason)) > 0`),
 ]);
+
+export const stripeEvents = pgTable("stripe_events", {
+	id: text().primaryKey().notNull(),
+	type: text().notNull(),
+	source: text().notNull(),
+	stripeAccountId: text("stripe_account_id"),
+	payload: jsonb().notNull(),
+	receivedAt: timestamp("received_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	processedAt: timestamp("processed_at", { withTimezone: true, mode: 'string' }),
+	outcome: text(),
+	attempts: integer().default(0).notNull(),
+	error: text(),
+}, (table) => [
+	index("stripe_events_pending_idx").using("btree", table.receivedAt.asc().nullsLast().op("timestamptz_ops")).where(sql`(processed_at IS NULL)`),
+	index("stripe_events_type_idx").using("btree", table.type.asc().nullsLast().op("text_ops")),
+	check("stripe_events_attempts_check", sql`attempts >= 0`),
+	check("stripe_events_check", sql`(processed_at IS NULL) = (outcome IS NULL)`),
+	check("stripe_events_outcome_check", sql`outcome = ANY (ARRAY['processed'::text, 'ignored'::text])`),
+	check("stripe_events_source_check", sql`source = ANY (ARRAY['platform'::text, 'connect'::text, 'v2'::text])`),
+]);
+
+export const hostStripeAccounts = pgTable("host_stripe_accounts", {
+	userId: uuid("user_id").primaryKey().notNull(),
+	stripeAccountId: text("stripe_account_id").notNull(),
+	transfersStatus: text("transfers_status").default('pending').notNull(),
+	requirementsStatus: text("requirements_status"),
+	stripeSyncedAt: timestamp("stripe_synced_at", { withTimezone: true, mode: 'string' }),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
+}, (table) => [
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [accounts.id],
+			name: "host_stripe_accounts_user_id_fkey"
+		}).onDelete("restrict"),
+	unique("host_stripe_accounts_stripe_account_id_key").on(table.stripeAccountId),
+	pgPolicy("host_stripe_accounts: el Host lee la suya", { as: "permissive", for: "select", to: ["authenticated"], using: sql`(user_id = ( SELECT auth.uid() AS uid))` }),
+	check("host_stripe_accounts_requirements_status_check", sql`requirements_status = ANY (ARRAY['currently_due'::text, 'eventually_due'::text, 'past_due'::text])`),
+	check("host_stripe_accounts_transfers_status_check", sql`transfers_status = ANY (ARRAY['active'::text, 'pending'::text, 'rejected'::text, 'restricted'::text, 'unsupported'::text])`),
+]);

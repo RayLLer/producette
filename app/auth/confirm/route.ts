@@ -1,7 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { safeNextPath } from '@/lib/domain/safe-redirect';
 import { authErrorReason } from '@/lib/domain/auth-errors';
-import { type EmailOtpType } from '@supabase/supabase-js';
+import { type EmailOtpType, type User } from '@supabase/supabase-js';
+import { ensureStripeCustomer } from '@/lib/server/stripe/customers';
+import { stripeErrorCode } from '@/lib/server/stripe';
 import { redirect } from 'next/navigation';
 import { type NextRequest } from 'next/server';
 
@@ -23,18 +25,30 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient();
 
   if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+    const { data, error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (error) redirect(`/auth/error?reason=${authErrorReason(error.code)}`);
+    await tryEnsureStripeCustomer(data.user);
     redirect(next);
   }
 
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     // Supabase only issues the code after verifying the email, so the address is already
     // confirmed; the exchange fails when the link is opened in another browser or device.
     if (error) redirect('/auth/login?confirmed=1');
+    await tryEnsureStripeCustomer(data.user);
     redirect(next);
   }
 
   redirect('/auth/error?reason=missing_token');
+}
+
+// A Stripe outage must not block sign-in: ensureStripeCustomer runs again before any money action.
+async function tryEnsureStripeCustomer(user: User | null) {
+  if (!user) return;
+  try {
+    await ensureStripeCustomer({ id: user.id, email: user.email });
+  } catch (err) {
+    console.error(`[stripe] ensureStripeCustomer failed on confirm (${stripeErrorCode(err)})`);
+  }
 }
