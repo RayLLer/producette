@@ -200,6 +200,33 @@ export type Database = {
           },
         ]
       }
+      job_runs: {
+        Row: {
+          error: string | null
+          finished_at: string | null
+          id: number
+          job: string
+          processed: number | null
+          started_at: string
+        }
+        Insert: {
+          error?: string | null
+          finished_at?: string | null
+          id?: never
+          job: string
+          processed?: number | null
+          started_at?: string
+        }
+        Update: {
+          error?: string | null
+          finished_at?: string | null
+          id?: never
+          job?: string
+          processed?: number | null
+          started_at?: string
+        }
+        Relationships: []
+      }
       panel_users: {
         Row: {
           active: boolean

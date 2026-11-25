@@ -46,7 +46,12 @@ const SecretSchema = z.object({
   EMAIL_ALLOWLIST: z.string().optional(),
   SENTRY_AUTH_TOKEN: z.string().optional(),
   // Paso 6:
-  DEADLINE_SCALE: z.coerce.number().optional(),
+  // Multiplies hour-based deadlines (lib/domain/deadlines.ts). Outside production it may be
+  // e.g. 0.0035 (48 h ≈ 10 min). In production only 1 is allowed (guard below).
+  DEADLINE_SCALE: z.coerce
+    .number()
+    .positive({ error: 'DEADLINE_SCALE must be a positive number' })
+    .optional(),
 });
 
 // ── Parse and throw with clear message on failure ─────────────────────────────

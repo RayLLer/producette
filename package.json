@@ -18,8 +18,8 @@
     "seed": "npx tsx scripts/seed.ts",
     "stripe:listen": "stripe listen --all-snapshot --forward-to localhost:3000/api/webhooks/stripe --forward-connect-to localhost:3000/api/webhooks/stripe-connect",
     "stripe:listen:v2": "stripe listen --events \"v2.core.account[requirements].updated,v2.core.account[configuration.recipient].capability_status_updated\" --forward-to localhost:3000/api/webhooks/stripe-v2",
-    "sweep": "curl -s -X POST http://localhost:3000/api/internal/sweep -H \"Authorization: Bearer $CRON_SECRET\"",
-    "sweep:watch": "node --eval \"const{execSync}=require('child_process'); setInterval(()=>{ try{execSync('npm run sweep',{stdio:'inherit'})}catch(e){} },60000); execSync('npm run sweep',{stdio:'inherit'})\"",
+    "sweep": "node scripts/sweep.mjs",
+    "sweep:watch": "node scripts/sweep.mjs --watch",
     "prepare": "npx simple-git-hooks",
     "db:pull": "node scripts/drizzle-pull.mjs"
   },
