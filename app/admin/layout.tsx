@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Geist } from 'next/font/google';
 import '../globals.css';
+import { EnvBanner } from '@/components/env-banner';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -12,7 +13,10 @@ const geistSans = Geist({
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" className={geistSans.variable}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <EnvBanner />
+      </body>
     </html>
   );
 }

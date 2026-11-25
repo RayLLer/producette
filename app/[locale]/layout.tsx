@@ -5,6 +5,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { Geist } from 'next/font/google';
 import { routing } from '@/i18n/routing';
 import type { Metadata } from 'next';
+import { EnvBanner } from '@/components/env-banner';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -37,6 +38,7 @@ export default async function LocaleLayout({
     <html lang={locale} className={geistSans.variable}>
       <body className="antialiased">
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <EnvBanner />
       </body>
     </html>
   );
