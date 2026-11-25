@@ -27,7 +27,7 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/admin') || pathname.startsWith('/auth/')) {
     if (pathname.startsWith('/admin') && !claims) {
       const url = request.nextUrl.clone();
-      url.pathname = '/es/login';
+      url.pathname = '/auth/login';
       url.searchParams.set('next', pathname);
       return noindex(carrySupabase(supabaseResponse, NextResponse.redirect(url)));
     }
