@@ -79,3 +79,42 @@ export function calculateFees(params: {
     appliedClientBps,
   };
 }
+
+export interface LowerPriceSettlement {
+  agreedPriceInCents: number;
+  refundToClientInCents: number;
+  clientFeeKeptInCents: number;
+  platformFeeInCents: number;
+  hostNetInCents: number;
+}
+
+/**
+ * Splits a paid booking when Client and Host agree on a lower price (alcance: "no se
+ * recalcula el 5% ni el 10%"; edge case confirmed 2026-11-25):
+ * - The Client gets back price − agreed; the client fee is never refunded.
+ * - The platform fee stays the cents stored on the quote, capped at the agreed price.
+ * - The Host receives what is left of the agreed price (never below zero).
+ */
+export function settleLowerAgreedPrice(params: {
+  quote: Pick<FeeResult, 'priceInCents' | 'clientFeeInCents' | 'platformFeeInCents'>;
+  agreedPriceInCents: number;
+}): LowerPriceSettlement {
+  const { quote, agreedPriceInCents } = params;
+
+  if (!Number.isInteger(agreedPriceInCents) || agreedPriceInCents < 0) {
+    throw new Error('agreedPriceInCents must be a non-negative integer');
+  }
+  if (agreedPriceInCents > quote.priceInCents) {
+    throw new Error('agreedPriceInCents cannot exceed the quoted price');
+  }
+
+  const platformFeeInCents = Math.min(quote.platformFeeInCents, agreedPriceInCents);
+
+  return {
+    agreedPriceInCents,
+    refundToClientInCents: quote.priceInCents - agreedPriceInCents,
+    clientFeeKeptInCents: quote.clientFeeInCents,
+    platformFeeInCents,
+    hostNetInCents: agreedPriceInCents - platformFeeInCents,
+  };
+}

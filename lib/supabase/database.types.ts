@@ -162,6 +162,44 @@ export type Database = {
           },
         ]
       }
+      host_stripe_accounts: {
+        Row: {
+          created_at: string
+          requirements_status: string | null
+          stripe_account_id: string
+          stripe_synced_at: string | null
+          transfers_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          requirements_status?: string | null
+          stripe_account_id: string
+          stripe_synced_at?: string | null
+          transfers_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          requirements_status?: string | null
+          stripe_account_id?: string
+          stripe_synced_at?: string | null
+          transfers_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "host_stripe_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       panel_users: {
         Row: {
           active: boolean
@@ -237,6 +275,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stripe_events: {
+        Row: {
+          attempts: number
+          error: string | null
+          id: string
+          outcome: string | null
+          payload: Json
+          processed_at: string | null
+          received_at: string
+          source: string
+          stripe_account_id: string | null
+          type: string
+        }
+        Insert: {
+          attempts?: number
+          error?: string | null
+          id: string
+          outcome?: string | null
+          payload: Json
+          processed_at?: string | null
+          received_at?: string
+          source: string
+          stripe_account_id?: string | null
+          type: string
+        }
+        Update: {
+          attempts?: number
+          error?: string | null
+          id?: string
+          outcome?: string | null
+          payload?: Json
+          processed_at?: string | null
+          received_at?: string
+          source?: string
+          stripe_account_id?: string | null
+          type?: string
+        }
+        Relationships: []
       }
     }
     Views: {

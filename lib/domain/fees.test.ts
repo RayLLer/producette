@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   calculateFees,
+  settleLowerAgreedPrice,
   DEFAULT_FEE_SETTINGS,
   type FeeSettings,
 } from './fees';
@@ -158,5 +159,53 @@ describe('calculateFees', () => {
     expect(result.clientFeeInCents).toBe(6_000);
     expect(result.platformFeeInCents).toBe(12_000);
     expect(result.hostNetInCents).toBe(88_000);
+  });
+});
+
+describe("settleLowerAgreedPrice", () => {
+  const quote = calculateFees({
+    priceInCents: 340_000,
+    settings,
+    hostIsFounder: false,
+    clientReferredByThisHost: false,
+  });
+
+  it("acuerdan $3,000 sobre $3,400: reembolso $400, comisión fija $340, Host $2,660", () => {
+    const r = settleLowerAgreedPrice({ quote, agreedPriceInCents: 300_000 });
+    expect(r.refundToClientInCents).toBe(40_000);
+    expect(r.platformFeeInCents).toBe(34_000);
+    expect(r.hostNetInCents).toBe(266_000);
+  });
+
+  it("no devuelve el 5% del cliente ni recalcula la comisión", () => {
+    const r = settleLowerAgreedPrice({ quote, agreedPriceInCents: 300_000 });
+    expect(r.refundToClientInCents + r.platformFeeInCents + r.hostNetInCents).toBe(
+      quote.priceInCents,
+    );
+    expect(r.clientFeeKeptInCents).toBe(quote.clientFeeInCents);
+  });
+
+  it("monto acordado menor que la comisión: Producette se queda con el monto, Host $0", () => {
+    const r = settleLowerAgreedPrice({ quote, agreedPriceInCents: 20_000 });
+    expect(r.refundToClientInCents).toBe(320_000);
+    expect(r.platformFeeInCents).toBe(20_000);
+    expect(r.hostNetInCents).toBe(0);
+  });
+
+  it("monto acordado igual al precio: sin reembolso, reparto original", () => {
+    const r = settleLowerAgreedPrice({ quote, agreedPriceInCents: 340_000 });
+    expect(r.refundToClientInCents).toBe(0);
+    expect(r.hostNetInCents).toBe(quote.hostNetInCents);
+  });
+
+  it("monto cero: reembolso del precio completo, sin comisión ni Host", () => {
+    const r = settleLowerAgreedPrice({ quote, agreedPriceInCents: 0 });
+    expect(r).toMatchObject({ refundToClientInCents: 340_000, platformFeeInCents: 0, hostNetInCents: 0 });
+  });
+
+  it("rechaza montos mayores al precio, decimales y negativos", () => {
+    expect(() => settleLowerAgreedPrice({ quote, agreedPriceInCents: 340_001 })).toThrow();
+    expect(() => settleLowerAgreedPrice({ quote, agreedPriceInCents: 100.5 })).toThrow();
+    expect(() => settleLowerAgreedPrice({ quote, agreedPriceInCents: -1 })).toThrow();
   });
 });

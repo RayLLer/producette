@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { usersInAuth, accounts, profiles, feeSettings, panelUsers, auditLog } from "./schema";
+import { usersInAuth, accounts, profiles, feeSettings, panelUsers, auditLog, hostStripeAccounts } from "./schema";
 
 export const accountsRelations = relations(accounts, ({one, many}) => ({
 	usersInAuth: one(usersInAuth, {
@@ -18,6 +18,7 @@ export const accountsRelations = relations(accounts, ({one, many}) => ({
 	feeSettings: many(feeSettings),
 	panelUsers: many(panelUsers),
 	auditLogs: many(auditLog),
+	hostStripeAccounts: many(hostStripeAccounts),
 }));
 
 export const usersInAuthRelations = relations(usersInAuth, ({many}) => ({
@@ -48,6 +49,13 @@ export const panelUsersRelations = relations(panelUsers, ({one}) => ({
 export const auditLogRelations = relations(auditLog, ({one}) => ({
 	account: one(accounts, {
 		fields: [auditLog.actorUserId],
+		references: [accounts.id]
+	}),
+}));
+
+export const hostStripeAccountsRelations = relations(hostStripeAccounts, ({one}) => ({
+	account: one(accounts, {
+		fields: [hostStripeAccounts.userId],
 		references: [accounts.id]
 	}),
 }));
