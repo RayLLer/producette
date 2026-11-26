@@ -1,0 +1,88 @@
+# Push to main → migrate producette-staging (Paso 7). docs/despliegue.md explains every step.
+# Paso 9 adds the staging web deploy after the migration and the production flow on v* tags.
+#
+# GitHub Free: any workflow can read the repository secrets, including one changed in a
+# branch. Every change to this folder is the first thing to review in a pull request.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    # Paso 9: tags: ['v*']
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: read
+
+# Two deploys never run at the same time, and one in progress is never cancelled
+# (a migration must not be cut halfway). seed-staging.yml shares this group.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+env:
+  STAGING_PROJECT_REF: ukbzkobdkzolftvpdqfo # producette-staging (not a secret)
+
+jobs:
+  gate:
+    name: Merged PR with green CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check that this commit merges a pull request whose CI passed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/deploy-gate.sh "$GITHUB_SHA"
+
+  migrate-staging:
+    name: Migrate producette-staging
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_YES: '1'
+    steps:
+      - uses: actions/checkout@v4
+      # The password lives only inside STAGING_DATABASE_URL (also used by seed-staging.yml),
+      # so rotating it means updating a single secret. The decoded password is masked
+      # before it is exported, and the URL must point to producette-staging.
+      - name: Read the staging database password
+        env:
+          STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const ref = process.env.STAGING_PROJECT_REF;
+            let url;
+            try { url = new URL(process.env.STAGING_DATABASE_URL); } catch {
+              console.log("::error::STAGING_DATABASE_URL is missing or is not a valid URL"); process.exit(1);
+            }
+            if (!url.username.endsWith("." + ref) && !url.hostname.includes(ref)) {
+              console.log("::error::STAGING_DATABASE_URL does not point to producette-staging"); process.exit(1);
+            }
+            const password = decodeURIComponent(url.password);
+            if (!password) { console.log("::error::STAGING_DATABASE_URL has no password"); process.exit(1); }
+            console.log("::add-mask::" + password);
+            const eof = "EOF_" + require("node:crypto").randomUUID();
+            fs.appendFileSync(process.env.GITHUB_ENV, `SUPABASE_DB_PASSWORD<<${eof}\n${password}\n${eof}\n`);
+          '
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.1.0 # same version as local; change it in its own pull request
+      - name: Pending migrations (dry run)
+        run: supabase db push --remote="$STAGING_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --dry-run
+      - name: Apply migrations
+        run: supabase db push --remote="$STAGING_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
+
+      # Paso 9: deploy the staging web only if the migration succeeded.
+      # - run: npx vercel@<pinned> deploy --target=staging --yes --token "$VERCEL_TOKEN"
+      #   env:
+      #     VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      #     VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      #     VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  # Paso 9: production job on v* tags — check the commit is on main and already went through
+  # staging, migrate producette-prod, then `vercel deploy --prod`.

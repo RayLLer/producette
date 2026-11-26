@@ -57,7 +57,8 @@ async function ensureUser(email: string, fullName: string): Promise<string> {
     if (list.error) throw list.error;
     const found = list.data.users.find((u) => u.email === email);
     if (found) return found.id;
-    if (list.data.users.length < 200) throw new Error(`[seed] No se encontró ${email}`);
+    // No email in the message: this script also runs in GitHub Actions logs.
+    if (list.data.users.length < 200) throw new Error(`[seed] No se encontró el usuario "${fullName}"`);
   }
 }
 
