@@ -34,10 +34,11 @@ Se cargan en GitHub → Settings → Secrets and variables → Actions, o desde 
 | Secreto | Para qué | Dónde se obtiene |
 | --- | --- | --- |
 | `SUPABASE_ACCESS_TOKEN` | El CLI de Supabase en `deploy.yml` | supabase.com → Account → Access Tokens (token personal) |
-| `STAGING_DB_PASSWORD` | Contraseña de la base de producette-staging | Panel de producette-staging → Database → Settings |
+| `STAGING_DATABASE_URL` | Migraciones (de aquí sale la contraseña de la base) y seed de staging | Panel de producette-staging → Connect → Transaction pooler (con la contraseña en lugar de `[YOUR-PASSWORD]`) |
 | `STAGING_SUPABASE_SECRET_KEY` | Seed de staging | Panel de producette-staging → Project Settings → API Keys (`sb_secret_…`) |
-| `STAGING_DATABASE_URL` | Seed de staging | Panel de producette-staging → Connect → Transaction pooler (con la contraseña incluida) |
 | `SEED_EMAIL`, `SEED_ADMIN_EMAIL`, `SEED_PASSWORD` | Seed de staging: los mismos valores que en `.env.local` | Tu `.env.local` |
+
+La contraseña de la base de staging solo vive dentro de `STAGING_DATABASE_URL`. `deploy.yml` la extrae de ahí, la oculta en el log y comprueba que la URL apunte a producette-staging antes de migrar. Si cambias la contraseña en Supabase, actualizas solo ese secreto.
 
 **Cuidado con GitHub Free**: cualquier workflow puede leer estos secretos, incluso uno modificado en una rama. Por eso todo cambio en `.github/` es lo primero que se revisa en un PR, y Claude Code pide confirmación antes de editar `.github/workflows/`.
 
