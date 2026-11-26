@@ -1,0 +1,36 @@
+# Manual only: loads the test data of scripts/seed.ts into producette-staging (Paso 7).
+# Idempotent. Runs from main only; scripts/seed.ts refuses any project but dev or staging.
+name: Seed staging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-staging # never at the same time as a staging migration
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    name: Seed producette-staging
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://ukbzkobdkzolftvpdqfo.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.STAGING_SUPABASE_SECRET_KEY }}
+      DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      SEED_EMAIL: ${{ secrets.SEED_EMAIL }}
+      SEED_ADMIN_EMAIL: ${{ secrets.SEED_ADMIN_EMAIL }}
+      SEED_PASSWORD: ${{ secrets.SEED_PASSWORD }}
+      SKIP_INSTALL_SIMPLE_GIT_HOOKS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run seed
